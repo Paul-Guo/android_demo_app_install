@@ -36,7 +36,6 @@
 
 # OS generated files #
 ######################
-.DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
@@ -44,18 +43,12 @@
 ehthumbs.db
 Thumbs.db
 .idea/
-*.iml
 */*.iml
 */*/*.iml
 */*/*/*.iml
-build/
 .gradle/
 local.properties
-/build
-/captures
-*/build
 */bin
 */gen
 */.settings
-*/*/build
 .idea
