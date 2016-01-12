@@ -3,6 +3,7 @@ package appinstall.android.hc.com.appinstall.controller;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -53,7 +54,6 @@ public class AppManager {
     }
 
     private HttpHelper httpHelper = new HttpHelper();
-    private HashMap<String, PackageInfo> packageInfoHashMap = new HashMap<>();
     private HashMap<String, AsyncTask> asyncTaskHashMap = new HashMap<>();
     private PackageManager pm;
 
@@ -73,6 +73,7 @@ public class AppManager {
     public AppDataList getAppDataListFromNet(final String url) {
         try {
             String string = Resources.toString(new URL(url), Charset.defaultCharset());
+            string = string.replace("mailesong.test.com", "cn.com.mcdonalds.m4d");
             AppDataList appDataList = AppDataList.fromJsonStr(string);
             Log.e("test_app_list", new Gson().toJson(appDataList).toString());
             return appDataList;
@@ -82,47 +83,52 @@ public class AppManager {
         return null;
     }
 
+    public boolean openApk(Context context, String pkg) {
+        if (null != pkg && null != context) {
+            PackageManager packageManager = getPm(context);
+            Intent intent = packageManager.getLaunchIntentForPackage(pkg);
+            if (null != intent) {
+                context.startActivity(intent);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean installApk(Context context, Uri uri) {
         if (null != uri && null != context) {
             Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
             intent.setDataAndType(uri, "application/*");
             intent.setComponent(new ComponentName("com.android.packageinstaller", "com.android.packageinstaller.PackageInstallerActivity"));
             context.startActivity(intent);
+            return true;
         }
         return false;
     }
 
     public boolean unInstallApk(Context context, AppData data) {
         if (null != data && null != data.getPkg() && null != context) {
-            Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE);
-            Uri uri = Uri.parse("package:" + data.getPkg());
-            intent.setDataAndType(uri, "application/*");
-            context.startActivity(intent);
+            Uri packageUri = Uri.parse("package:" + data.getPkg());
+            Intent uninstallIntent =
+                    new Intent(Intent.ACTION_UNINSTALL_PACKAGE, packageUri);
+            context.startActivity(uninstallIntent);
+            return true;
         }
         return false;
     }
 
     public boolean isInstalled(Context context, AppData data) {
-        synchronized (packageInfoHashMap) {
-            if (null != data && null != data.getPkg() && null != context) {
-                PackageInfo info = null;
-                if (packageInfoHashMap.containsKey(data.getPkg())) {
-                    info = packageInfoHashMap.get(data.getPkg());
-                } else {
-                    PackageManager pm = getPm(context);
-                    try {
-                        info = pm.getPackageInfo(data.getPkg(), PackageManager.GET_ACTIVITIES);
-                        if (null != info && null != info.packageName && info.packageName.equals(data.getPkg())) {
-                            packageInfoHashMap.put(data.getPkg(), info);
-                        }
-                    } catch (Exception e) {
+        if (null != data && null != data.getPkg() && null != context) {
+            PackageInfo info = null;
+            PackageManager pm = getPm(context);
+            try {
+                info = pm.getPackageInfo(data.getPkg(), PackageManager.GET_ACTIVITIES);
+            } catch (Exception e) {
 //                        e.printStackTrace();
-                    }
-                }
-                return null != info && null != info.packageName && info.packageName.equals(data.getPkg());
             }
-            return false;
+            return null != info && null != info.packageName && info.packageName.equals(data.getPkg());
         }
+        return false;
     }
 
     public boolean startDownload(final Context context, final AppData data) {
@@ -164,8 +170,20 @@ public class AppManager {
                         protected void onProgressUpdate(Integer... values) {
                             super.onProgressUpdate(values);
                         }
+
+                        @Override
+                        protected void onCancelled() {
+                            Log.e("test", "canceled 1 : " + data.getPkg());
+                            super.onCancelled();
+                        }
+
+                        @Override
+                        protected void onCancelled(File file) {
+                            Log.e("test", "canceled 2 : " + data.getPkg());
+                            super.onCancelled(file);
+                        }
                     };
-                    asyncTask.execute();
+                    asyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                     asyncTaskHashMap.put(data.getPkg(), asyncTask);
                     return true;
                 }
@@ -231,6 +249,6 @@ public class AppManager {
                 }
                 return null;
             }
-        }.execute();
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 }

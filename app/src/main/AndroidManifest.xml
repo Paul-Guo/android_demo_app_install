@@ -29,11 +29,16 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".MainBroadcastReceiver">
+        <receiver
+            android:name=".MainBroadcastReceiver"
+            android:enabled="true"
+            android:priority="0">
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_ADDED"></action>
                 <action android:name="android.intent.action.PACKAGE_CHANGED"></action>
                 <action android:name="android.intent.action.PACKAGE_REMOVED"></action>
+
+                <data android:scheme="package"></data>
             </intent-filter>
         </receiver>
     </application>

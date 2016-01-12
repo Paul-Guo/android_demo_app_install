@@ -57,38 +57,42 @@ public class MainActivity extends AppCompatActivity {
                 appListViewBaseAdapter.setAppDataList(aVoid);
                 appListViewBaseAdapter.notifyDataSetChanged();
             }
-        }.execute();
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
-        intentFilter.addAction(Intent.ACTION_PACKAGE_CHANGED);
-        intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
-        intentFilter.addAction(Intent.ACTION_PACKAGE_REPLACED);
-        registerReceiver(appChangedBroadcastReceiver, intentFilter);
+        checkIntent(getIntent());
     }
 
     final AppListBaseAdapter appListViewBaseAdapter = new AppListBaseAdapter();
-    BroadcastReceiver appChangedBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, final Intent intent) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    String action = intent.getAction();
-                    Uri data = intent.getData();
-                    Log.e("test_app_list", data.toString());
-                    if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
-                        appManager.reportInstalledApk("");
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        checkIntent(intent);
+    }
+
+    private void checkIntent(final Intent intent) {
+        if (null != intent) {
+            final Bundle intentExtras = intent.getExtras();
+            if (null != intentExtras) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String action = intentExtras.getString("action");
+                        if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
+                            Uri data = intent.getData();
+                            Log.e("test_app_list", data.toString());
+                            Log.e("test_app_list", data.getSchemeSpecificPart());
+                            appManager.reportInstalledApk(data.getSchemeSpecificPart());
+                        }
+                        appListViewBaseAdapter.notifyDataSetChanged();
                     }
-                    appListViewBaseAdapter.notifyDataSetChanged();
-                }
-            });
+                });
+            }
         }
-    };
+    }
 
     @Override
     protected void onDestroy() {
-        unregisterReceiver(appChangedBroadcastReceiver);
         appManager.onDestroy();
         super.onDestroy();
     }

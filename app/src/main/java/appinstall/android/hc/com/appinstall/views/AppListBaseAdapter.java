@@ -55,11 +55,20 @@ public class AppListBaseAdapter extends BaseAdapter {
         TextView title = (TextView) convertView.findViewById(R.id.title);
         title.setText(data.getTitle());
 
+        Button open = (Button) convertView.findViewById(R.id.open);
+        open.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                appManager.openApk(context, data.getPkg());
+            }
+        });
         Button button = (Button) convertView.findViewById(R.id.button);
+        open.setVisibility(View.GONE);
         if (appManager.isDownloading(data)) {
             button.setText(R.string.app_cancel_downloading);
         } else if (appManager.isInstalled(context, data)) {
             button.setText(R.string.app_uninstall);
+            open.setVisibility(View.VISIBLE);
         } else {
             button.setText(R.string.app_install);
         }
