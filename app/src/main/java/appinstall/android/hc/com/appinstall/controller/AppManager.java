@@ -3,33 +3,22 @@ package appinstall.android.hc.com.appinstall.controller;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
-import com.google.common.base.Strings;
-import com.google.common.io.FileWriteMode;
-import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 
 import net.android.hc.com.HttpHelper;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.Future;
 
 import appinstall.android.hc.com.appinstall.datas.AppData;
 import appinstall.android.hc.com.appinstall.datas.AppDataList;
@@ -135,54 +124,7 @@ public class AppManager {
         synchronized (asyncTaskHashMap) {
             if (null != data && null != data.getPkg()) {
                 if (!isDownloading(data)) {
-                    AsyncTask<Void, Integer, File> asyncTask = new AsyncTask<Void, Integer, File>() {
-                        @Override
-                        protected File doInBackground(Void... params) {
-                            publishProgress(0);
-                            try {
-                                String cache = getCachePath() + "/" + data.getPkg();
-                                File file = new File(cache);
-                                Files.createParentDirs(file);
-                                Resources.asByteSource(new URL(data.getUrl())).
-                                        copyTo(Files.asByteSink(file));
-                                return file;
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            publishProgress(100);
-                            return null;
-                        }
-
-                        @Override
-                        protected void onPostExecute(File o) {
-                            super.onPostExecute(o);
-                            synchronized (asyncTaskHashMap) {
-                                asyncTaskHashMap.remove(data.getPkg());
-                            }
-                            if (null != o) {
-                                if (o.exists()) {
-                                    AppManager.getInstance().installApk(context, Uri.fromFile(o));
-                                }
-                            }
-                        }
-
-                        @Override
-                        protected void onProgressUpdate(Integer... values) {
-                            super.onProgressUpdate(values);
-                        }
-
-                        @Override
-                        protected void onCancelled() {
-                            Log.e("test", "canceled 1 : " + data.getPkg());
-                            super.onCancelled();
-                        }
-
-                        @Override
-                        protected void onCancelled(File file) {
-                            Log.e("test", "canceled 2 : " + data.getPkg());
-                            super.onCancelled(file);
-                        }
-                    };
+                    DownloadAppAsyncTask asyncTask = new DownloadAppAsyncTask(asyncTaskHashMap, context, data);
                     asyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                     asyncTaskHashMap.put(data.getPkg(), asyncTask);
                     return true;
@@ -216,9 +158,13 @@ public class AppManager {
                     asyncTask = asyncTaskHashMap.get(data.getPkg());
                 }
                 if (null != asyncTask && !asyncTask.isCancelled()) {
-                    boolean canceled = asyncTask.cancel(true);
+                    asyncTask.cancel(true);
+                    if (asyncTask instanceof DownloadAppAsyncTask) {
+                        ((DownloadAppAsyncTask) asyncTask).release();
+                    } else {
+                    }
                     asyncTaskHashMap.remove(data.getPkg());
-                    return canceled;
+                    return true;
                 }
             }
             return false;
