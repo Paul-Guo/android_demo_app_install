@@ -5,19 +5,25 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.google.common.io.ByteProcessor;
 import com.google.common.io.ByteSink;
 import com.google.common.io.ByteSource;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import com.google.common.io.Closer;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.HashMap;
 
 import appinstall.android.hc.com.appinstall.datas.AppData;
+import appinstall.android.hc.com.appinstall.views.AppListBaseAdapter;
 
 /**
  * Created by paulguo on 2016/1/12.
@@ -26,17 +32,34 @@ public class DownloadAppAsyncTask extends AsyncTask<Void, Integer, File> {
 
     DownloadAppAsyncTask(HashMap<String, AsyncTask> asyncTaskHashMap,
                          Context context,
-                         AppData data) {
+                         AppData data,
+                         AppListBaseAdapter appListBaseAdapter) {
         this.context = context;
         this.asyncTaskHashMap = asyncTaskHashMap;
         this.data = data;
+        this.appListBaseAdapter = appListBaseAdapter;
     }
 
     Context context;
     HashMap<String, AsyncTask> asyncTaskHashMap;
     AppData data;
-    ByteSource byteSource = null;
-    FileOutputStream fileOutputStream;
+    AppListBaseAdapter appListBaseAdapter;
+    Closer closer;
+    long size;
+    int maxProgress = 100;
+    int progress;
+
+    public long getSize() {
+        return size;
+    }
+
+    public int getMaxProgress() {
+        return maxProgress;
+    }
+
+    public int getProgress() {
+        return progress;
+    }
 
     @Override
     protected File doInBackground(Void... params) {
@@ -44,19 +67,46 @@ public class DownloadAppAsyncTask extends AsyncTask<Void, Integer, File> {
         publishProgress(0);
         if (null != data) {
             try {
-                String cache = AppManager.getCachePath() + "/" + data.getPkg();
+                closer = Closer.create();
+                URL url = new URL(data.getUrl());
+                ByteSource byteSource = Resources.asByteSource(url);
+                size = byteSource.size();
+                InputStream inputStream = byteSource.openStream();
+                closer.register(inputStream);
+                String cache = FilesManager.getCachedFileFromPkg(data.getPkg());
                 file = new File(cache);
                 Files.createParentDirs(file);
-                fileOutputStream = new FileOutputStream(file);
-                byteSource = Resources.asByteSource(new URL(data.getUrl()));
-                byteSource.copyTo(fileOutputStream);
-                closeStream();
+                ByteSink byteSink = Files.asByteSink(file);
+                final OutputStream outputStream = byteSink.openStream();
+                closer.register(outputStream);
+                long readResult = ByteStreams.readBytes(inputStream,
+                        new ByteProcessor<Long>() {
+                            long readRet = 0;
+
+                            @Override
+                            public boolean processBytes(byte[] bytes, int off, int len) throws IOException {
+                                outputStream.write(bytes, off, len);
+                                readRet += len;
+                                publishProgress(size > 0 ? (int) (maxProgress * readRet / size) : 0);
+                                return true;
+                            }
+
+                            @Override
+                            public Long getResult() {
+                                return readRet;
+                            }
+                        });
+                if (size != readResult) {
+                    file = null;
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 file = null;
+            } finally {
+                closeStream();
             }
         }
-        publishProgress(100);
+        publishProgress(maxProgress);
         return file;
     }
 
@@ -76,6 +126,10 @@ public class DownloadAppAsyncTask extends AsyncTask<Void, Integer, File> {
 
     @Override
     protected void onProgressUpdate(Integer... values) {
+        progress = values[0];
+        if (null != appListBaseAdapter) {
+            appListBaseAdapter.notifyDataSetChanged();
+        }
         super.onProgressUpdate(values);
     }
 
@@ -95,13 +149,9 @@ public class DownloadAppAsyncTask extends AsyncTask<Void, Integer, File> {
 
     private void closeStream() {
         try {
-            if (null != byteSource) {
-                Closeables.close(byteSource.openStream(), true);
-                byteSource = null;
-            }
-            if (null != fileOutputStream) {
-                fileOutputStream.close();
-                fileOutputStream = null;
+            if (null != closer) {
+                closer.close();
+                closer = null;
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -1,47 +1,40 @@
 package appinstall.android.hc.com.appinstall;
 
-import android.app.Notification;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.view.animation.AnimationUtils;
 import android.widget.ListView;
+import android.widget.TextView;
+
+import com.google.common.base.Objects;
+
+import java.util.ArrayList;
 
 import appinstall.android.hc.com.appinstall.controller.AppManager;
+import appinstall.android.hc.com.appinstall.datas.AppData;
 import appinstall.android.hc.com.appinstall.datas.AppDataList;
 import appinstall.android.hc.com.appinstall.views.AppListBaseAdapter;
 
 public class MainActivity extends AppCompatActivity {
     AppManager appManager = AppManager.getInstance();
 
+    ArrayList<String> scoredPkgs = new ArrayList<>();
+    long myScore = 0;
+    TextView myScoreTextView;
+
+    final AppListBaseAdapter appListViewBaseAdapter = new AppListBaseAdapter();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
 
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
+        myScoreTextView = (TextView) findViewById(R.id.myScoreText);
+        updateMyScrollText();
 
         final ListView appListView = (ListView) findViewById(R.id.appsListView);
         appListView.setAdapter(appListViewBaseAdapter);
@@ -56,13 +49,29 @@ public class MainActivity extends AppCompatActivity {
                 super.onPostExecute(aVoid);
                 appListViewBaseAdapter.setAppDataList(aVoid);
                 appListViewBaseAdapter.notifyDataSetChanged();
+                updateMyScrollText();
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
         checkIntent(getIntent());
     }
 
-    final AppListBaseAdapter appListViewBaseAdapter = new AppListBaseAdapter();
+    private void updateMyScrollText() {
+        if (appListViewBaseAdapter.getCount() > 0) {
+            for (String pkg : scoredPkgs) {
+                if (appManager.isInstalled(this, pkg)) {
+                    for (AppData appData : appListViewBaseAdapter.getAppDataList().getApps()) {
+                        if (Objects.equal(pkg, appData.getPkg())) {
+                            myScore += appData.getScore();
+                        }
+                    }
+                }
+            }
+            scoredPkgs.clear();
+        }
+        myScoreTextView.setText(String.valueOf(myScore));
+        myScoreTextView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.grow_fade_in_from_bottom));
+    }
 
     @Override
     protected void onNewIntent(Intent intent) {
@@ -71,24 +80,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkIntent(final Intent intent) {
-        if (null != intent) {
-            final Bundle intentExtras = intent.getExtras();
-            if (null != intentExtras) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        String action = intentExtras.getString("action");
-                        if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
-                            Uri data = intent.getData();
-                            Log.e("test_app_list", data.toString());
-                            Log.e("test_app_list", data.getSchemeSpecificPart());
-                            appManager.reportInstalledApk(data.getSchemeSpecificPart());
-                        }
-                        appListViewBaseAdapter.notifyDataSetChanged();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (appManager.handleIntent(intent)) {
+                    String pkg = appManager.getPkgFromIntent(intent);
+                    if (null != pkg) {
+                        scoredPkgs.add(pkg);
                     }
-                });
+                    appListViewBaseAdapter.notifyDataSetChanged();
+                }
             }
-        }
+        });
     }
 
     @Override
@@ -101,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         appListViewBaseAdapter.notifyDataSetChanged();
+        updateMyScrollText();
     }
 
     @Override

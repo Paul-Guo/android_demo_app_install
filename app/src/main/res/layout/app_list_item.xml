@@ -6,23 +6,100 @@
     android:orientation="horizontal"
     android:padding="@dimen/app_list_margin">
 
-    <ImageView
-        android:id="@+id/icon"
-        android:layout_width="@dimen/app_list_item_icon_size"
-        android:layout_height="@dimen/app_list_item_icon_size"
-        android:scaleType="centerInside" />
+    <LinearLayout
+        android:id="@+id/scoreLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/app_list_margin"
+        android:visibility="gone">
 
-    <TextView
-        android:id="@+id/title"
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/star_big_on" />
+
+        <TextView
+            android:id="@+id/scoreText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="@dimen/app_list_margin"
+            android:layout_marginRight="@dimen/app_list_margin"
+            android:ellipsize="middle"
+            android:paddingRight="@dimen/app_list_padding_text"
+            android:singleLine="true"
+            android:text="@string/app_name"
+            android:textColor="@android:color/keyguard_text_color_unlock"
+            android:textSize="@dimen/app_list_item_text_size" />
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/app_list_margin"
-        android:layout_marginRight="@dimen/app_list_margin"
         android:layout_weight="1"
-        android:ellipsize="middle"
-        android:singleLine="true"
-        android:textColor="@color/colorAccent"
-        android:textSize="@dimen/app_list_item_text_size" />
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/icon"
+                android:layout_width="@dimen/app_list_item_icon_size"
+                android:layout_height="@dimen/app_list_item_icon_size"
+                android:layout_gravity="center_vertical"
+                android:scaleType="centerInside" />
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="@dimen/app_list_margin"
+                android:layout_marginRight="@dimen/app_list_margin"
+                android:layout_weight="1"
+                android:ellipsize="middle"
+                android:singleLine="true"
+                android:text="@string/app_name"
+                android:textColor="@android:color/background_dark"
+                android:textSize="@dimen/app_list_item_text_size" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/progressLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginLeft="@dimen/app_list_margin"
+            android:orientation="horizontal">
+
+            <ProgressBar
+                android:id="@+id/progress"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/progressText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="@dimen/app_list_margin"
+                android:layout_marginRight="@dimen/app_list_margin"
+                android:ellipsize="middle"
+                android:paddingRight="@dimen/app_list_padding_text"
+                android:singleLine="true"
+                android:text="@string/app_name"
+                android:textColor="@android:color/suggestion_highlight_text"
+                android:textSize="@dimen/app_list_item_text_size" />
+
+        </LinearLayout>
+    </LinearLayout>
+
 
     <Button
         android:id="@+id/open"

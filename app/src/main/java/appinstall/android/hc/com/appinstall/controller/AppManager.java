@@ -7,14 +7,19 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 
+import com.google.common.base.Functions;
+import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 
 import net.android.hc.com.HttpHelper;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -22,6 +27,8 @@ import java.util.HashMap;
 
 import appinstall.android.hc.com.appinstall.datas.AppData;
 import appinstall.android.hc.com.appinstall.datas.AppDataList;
+import appinstall.android.hc.com.appinstall.views.AppListBaseAdapter;
+import okhttp3.internal.io.FileSystem;
 
 /**
  * Created by paulguo on 2016/1/11.
@@ -45,10 +52,6 @@ public class AppManager {
     private HttpHelper httpHelper = new HttpHelper();
     private HashMap<String, AsyncTask> asyncTaskHashMap = new HashMap<>();
     private PackageManager pm;
-
-    public final static String getCachePath() {
-        return Environment.getExternalStorageDirectory() + "/AppInstall/cache";
-    }
 
     private PackageManager getPm(Context context) {
         if (null == pm) {
@@ -107,46 +110,65 @@ public class AppManager {
     }
 
     public boolean isInstalled(Context context, AppData data) {
-        if (null != data && null != data.getPkg() && null != context) {
-            PackageInfo info = null;
-            PackageManager pm = getPm(context);
-            try {
-                info = pm.getPackageInfo(data.getPkg(), PackageManager.GET_ACTIVITIES);
-            } catch (Exception e) {
-//                        e.printStackTrace();
-            }
-            return null != info && null != info.packageName && info.packageName.equals(data.getPkg());
+        if (null != data) {
+            return isInstalled(context, data.getPkg());
         }
         return false;
     }
 
-    public boolean startDownload(final Context context, final AppData data) {
+    public boolean isInstalled(Context context, String pkg) {
+        if (null != pkg && null != context) {
+            PackageInfo info = null;
+            PackageManager pm = getPm(context);
+            try {
+                info = pm.getPackageInfo(pkg, PackageManager.GET_ACTIVITIES);
+            } catch (Exception e) {
+//                        e.printStackTrace();
+            }
+            return null != info && null != info.packageName && info.packageName.equals(pkg);
+        }
+        return false;
+    }
+
+    public DownloadAppAsyncTask startDownload(final Context context, final AppData data,
+                                              final AppListBaseAdapter appListBaseAdapter) {
         synchronized (asyncTaskHashMap) {
             if (null != data && null != data.getPkg()) {
                 if (!isDownloading(data)) {
-                    DownloadAppAsyncTask asyncTask = new DownloadAppAsyncTask(asyncTaskHashMap, context, data);
+                    DownloadAppAsyncTask asyncTask = new DownloadAppAsyncTask(
+                            asyncTaskHashMap, context, data, appListBaseAdapter);
                     asyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                     asyncTaskHashMap.put(data.getPkg(), asyncTask);
-                    return true;
+                    return asyncTask;
                 }
+            }
+            return null;
+        }
+    }
+
+    public boolean isDownloading(AppData data) {
+        synchronized (asyncTaskHashMap) {
+            DownloadAppAsyncTask asyncTask = getDownloadingAsyncTask(data);
+            if (null != asyncTask && !asyncTask.isCancelled()) {
+                AsyncTask.Status status = asyncTask.getStatus();
+                return status != AsyncTask.Status.FINISHED;
             }
             return false;
         }
     }
 
-    public boolean isDownloading(AppData data) {
+    public DownloadAppAsyncTask getDownloadingAsyncTask(AppData data) {
         synchronized (asyncTaskHashMap) {
             if (null != data && null != data.getPkg()) {
                 AsyncTask asyncTask = null;
                 if (asyncTaskHashMap.containsKey(data.getPkg())) {
                     asyncTask = asyncTaskHashMap.get(data.getPkg());
                 }
-                if (null != asyncTask && !asyncTask.isCancelled()) {
-                    AsyncTask.Status status = asyncTask.getStatus();
-                    return status != AsyncTask.Status.FINISHED;
+                if (asyncTask instanceof DownloadAppAsyncTask) {
+                    return (DownloadAppAsyncTask) asyncTask;
                 }
             }
-            return false;
+            return null;
         }
     }
 
@@ -181,6 +203,11 @@ public class AppManager {
     }
 
     public void reportInstalledApk(final String pkg) {
+        try {
+            FileSystem.SYSTEM.delete(new File(FilesManager.getCachedFileFromPkg(pkg)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
@@ -196,5 +223,42 @@ public class AppManager {
                 return null;
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    public String getPkgFromIntent(Intent intent) {
+        if (null != intent) {
+            final Bundle intentExtras = intent.getExtras();
+            if (null != intentExtras) {
+                String action = intentExtras.getString("action");
+                if (Intent.ACTION_PACKAGE_ADDED.equals(action)
+                        || Intent.ACTION_PACKAGE_REMOVED.equals(action)
+                        || Intent.ACTION_PACKAGE_CHANGED.equals(action)) {
+                    Uri data = intent.getData();
+                    return data.getSchemeSpecificPart();
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean handleIntent(Intent intent) {
+        if (null != intent) {
+            final Bundle intentExtras = intent.getExtras();
+            if (null != intentExtras) {
+                String action = intentExtras.getString("action");
+                if (Intent.ACTION_PACKAGE_ADDED.equals(action)) {
+                    Uri data = intent.getData();
+                    Log.e("test_app_list", data.toString());
+                    Log.e("test_app_list", data.getSchemeSpecificPart());
+                    reportInstalledApk(data.getSchemeSpecificPart());
+                }
+                if (Intent.ACTION_PACKAGE_ADDED.equals(action)
+                        || Intent.ACTION_PACKAGE_REMOVED.equals(action)
+                        || Intent.ACTION_PACKAGE_CHANGED.equals(action)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

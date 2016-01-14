@@ -5,6 +5,7 @@
     <dimen name="fab_margin">16dp</dimen>
 
     <dimen name="app_list_margin">4dp</dimen>
+    <dimen name="app_list_padding_text">12dp</dimen>
     <dimen name="app_list_divider">2dp</dimen>
     <dimen name="app_list_item_icon_size">64dp</dimen>
     <dimen name="app_list_item_text_size">16dp</dimen>
