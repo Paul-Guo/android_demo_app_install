@@ -3,6 +3,8 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+    <integer name="config_activityShortDur">150</integer>
+    <integer name="config_activityDefaultDur">220</integer>
 
     <dimen name="app_list_margin">4dp</dimen>
     <dimen name="app_list_padding_text">12dp</dimen>

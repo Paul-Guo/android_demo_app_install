@@ -29,7 +29,7 @@
             android:paddingRight="@dimen/app_list_padding_text"
             android:singleLine="true"
             android:text="@string/app_name"
-            android:textColor="@android:color/keyguard_text_color_unlock"
+            android:textColor="@color/keyguard_text_color_unlock"
             android:textSize="@dimen/app_list_item_text_size" />
 
     </LinearLayout>
@@ -94,7 +94,7 @@
                 android:paddingRight="@dimen/app_list_padding_text"
                 android:singleLine="true"
                 android:text="@string/app_name"
-                android:textColor="@android:color/suggestion_highlight_text"
+                android:textColor="@color/suggestion_highlight_text"
                 android:textSize="@dimen/app_list_item_text_size" />
 
         </LinearLayout>

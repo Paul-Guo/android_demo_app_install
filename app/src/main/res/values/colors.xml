@@ -3,6 +3,8 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="keyguard_text_color_unlock">#a7d84c</color>
+    <color name="suggestion_highlight_text">#177bbd</color>
 
     <color name="app_list_divider">@android:color/darker_gray</color>
 </resources>
