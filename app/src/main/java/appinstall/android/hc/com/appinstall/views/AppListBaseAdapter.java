@@ -29,6 +29,32 @@ import appinstall.android.hc.com.appinstall.datas.AppDataList;
  * Created by paulguo on 2016/1/12.
  */
 public class AppListBaseAdapter extends BaseAdapter {
+    public static class ViewHolder {
+        AppListBaseAdapter appListBaseAdapter;
+        AppManager appManager;
+        AppData data;
+        public TextView scoreText;
+        public View scoreLayout;
+        public View progressLayout;
+        public TextView progressText;
+        public ProgressBar progressBar;
+        public ImageView icon;
+        public TextView title;
+        public Button open;
+        public Button button;
+
+        public void updateProgress() {
+            DownloadAppAsyncTask downloadAppAsyncTask = appManager.getDownloadingAsyncTask(data);
+            if (null != downloadAppAsyncTask) {
+                int progress = downloadAppAsyncTask.getProgress();
+                int maxProgress = downloadAppAsyncTask.getMaxProgress();
+                long size = downloadAppAsyncTask.getSize();
+                progressText.setText(FilesManager.getFileSize(size * progress / maxProgress) + " / " + FilesManager.getFileSize(size));
+                progressBar.setProgress(progress);
+                progressBar.setMax(maxProgress);
+            }
+        }
+    }
     AppManager appManager = AppManager.getInstance();
     AppDataList appDataList = new AppDataList();
 
@@ -56,56 +82,61 @@ public class AppListBaseAdapter extends BaseAdapter {
             convertView = LayoutInflater.from(context).
                     inflate(R.layout.app_list_item, parent, false);
         }
+        final ViewHolder viewHolder;
+        Object tag = convertView.getTag();
+        if (tag instanceof ViewHolder) {
+            viewHolder = (ViewHolder) tag;
+        } else {
+            viewHolder = new ViewHolder();
+            viewHolder.appListBaseAdapter = this;
+            viewHolder.appManager = appManager;
+            viewHolder.scoreText = (TextView) convertView.findViewById(R.id.scoreText);
+            viewHolder.scoreLayout = convertView.findViewById(R.id.scoreLayout);
+            viewHolder.icon = (ImageView) convertView.findViewById(R.id.icon);
+            viewHolder.title = (TextView) convertView.findViewById(R.id.title);
+            viewHolder.open = (Button) convertView.findViewById(R.id.open);
+            viewHolder.button = (Button) convertView.findViewById(R.id.button);
+            viewHolder.progressLayout = convertView.findViewById(R.id.progressLayout);
+            viewHolder.progressText = (TextView) viewHolder.progressLayout.findViewById(R.id.progressText);
+            viewHolder.progressBar = (ProgressBar) viewHolder.progressLayout.findViewById(R.id.progress);
+            convertView.setTag(viewHolder);
+        }
         final AppData data = getItem(position);
+        viewHolder.data = data;
 
-        final View scoreLayout = convertView.findViewById(R.id.scoreLayout);
-        updateScoreLayout(scoreLayout, data);
-        final TextView scoreText = (TextView) convertView.findViewById(R.id.scoreText);
-        scoreText.setText(String.valueOf(data.getScore()));
+        updateScoreLayout(viewHolder.scoreLayout, data);
+        viewHolder.scoreText.setText(String.valueOf(data.getScore()));
 
-        ImageView icon = (ImageView) convertView.findViewById(R.id.icon);
-        Picasso.with(context).load(Uri.parse(data.getIcon())).into(icon);
-        icon.setOnClickListener(new View.OnClickListener() {
+        Picasso.with(context).load(Uri.parse(data.getIcon())).into(viewHolder.icon);
+        viewHolder.icon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 dataShowingScore.put(data, !(dataShowingScore.containsKey(data) && dataShowingScore.get(data)));
-                updateScoreLayout(scoreLayout, data);
+                updateScoreLayout(viewHolder.scoreLayout, data);
             }
         });
 
-        TextView title = (TextView) convertView.findViewById(R.id.title);
-        title.setText(data.getTitle());
+        viewHolder.title.setText(data.getTitle());
 
-        Button open = (Button) convertView.findViewById(R.id.open);
-        open.setOnClickListener(new View.OnClickListener() {
+        viewHolder.open.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 appManager.openApk(context, data.getPkg());
             }
         });
-        Button button = (Button) convertView.findViewById(R.id.button);
-        open.setVisibility(View.GONE);
-        View progressLayout = convertView.findViewById(R.id.progressLayout);
-        progressLayout.setVisibility(View.GONE);
+        viewHolder.open.setVisibility(View.GONE);
+        viewHolder.progressLayout.setVisibility(View.GONE);
         if (appManager.isDownloading(data)) {
-            button.setText(R.string.app_cancel_downloading);
-            progressLayout.setVisibility(View.VISIBLE);
-            DownloadAppAsyncTask downloadAppAsyncTask = appManager.getDownloadingAsyncTask(data);
-            int progress = downloadAppAsyncTask.getProgress();
-            int maxProgress = downloadAppAsyncTask.getMaxProgress();
-            long size = downloadAppAsyncTask.getSize();
-            TextView progressText = (TextView) progressLayout.findViewById(R.id.progressText);
-            progressText.setText(FilesManager.getFileSize(size * progress / maxProgress) + " / " + FilesManager.getFileSize(size));
-            ProgressBar progressBar = (ProgressBar) progressLayout.findViewById(R.id.progress);
-            progressBar.setProgress(progress);
-            progressBar.setMax(maxProgress);
+            viewHolder.button.setText(R.string.app_cancel_downloading);
+            viewHolder.progressLayout.setVisibility(View.VISIBLE);
+            viewHolder.updateProgress();
         } else if (appManager.isInstalled(context, data)) {
-            button.setText(R.string.app_uninstall);
-            open.setVisibility(View.VISIBLE);
+            viewHolder.button.setText(R.string.app_uninstall);
+            viewHolder.open.setVisibility(View.VISIBLE);
         } else {
-            button.setText(R.string.app_install);
+            viewHolder.button.setText(R.string.app_install);
         }
-        button.setOnClickListener(new View.OnClickListener() {
+        viewHolder.button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (appManager.isDownloading(data)) {
@@ -113,7 +144,7 @@ public class AppListBaseAdapter extends BaseAdapter {
                 } else if (appManager.isInstalled(context, data)) {
                     appManager.unInstallApk(context, data);
                 } else {
-                    appManager.startDownload(context, data, AppListBaseAdapter.this);
+                    appManager.startDownload(context, data, viewHolder);
                 }
                 notifyDataSetChanged();
             }

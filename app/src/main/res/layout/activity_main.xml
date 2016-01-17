@@ -20,30 +20,43 @@
             android:gravity="center_vertical"
             app:popupTheme="@style/AppTheme.PopupOverlay">
 
+            <Button
+                android:id="@+id/refresh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_get_list_refresh"
+                android:textSize="@dimen/app_list_item_text_size" />
+
             <View
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"></View>
 
-            <ImageView
-                android:id="@+id/myScoreIcon"
+            <LinearLayout
+                android:id="@+id/myScoreLayout"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@android:drawable/star_big_on" />
+                android:layout_height="wrap_content">
 
-            <TextView
-                android:id="@+id/myScoreText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_marginLeft="@dimen/app_list_margin"
-                android:layout_marginRight="@dimen/app_list_margin"
-                android:ellipsize="middle"
-                android:paddingRight="@dimen/app_list_padding_text"
-                android:singleLine="true"
-                android:text="@string/app_name"
-                android:textColor="@color/colorAccent"
-                android:textSize="@dimen/app_list_item_text_size" />
+                <ImageView
+                    android:id="@+id/myScoreIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@android:drawable/star_big_on" />
+
+                <TextView
+                    android:id="@+id/myScoreText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="@dimen/app_list_margin"
+                    android:layout_marginRight="@dimen/app_list_margin"
+                    android:ellipsize="middle"
+                    android:paddingRight="@dimen/app_list_padding_text"
+                    android:singleLine="true"
+                    android:text="@string/app_name"
+                    android:textColor="@color/colorAccent"
+                    android:textSize="@dimen/app_list_item_text_size" />
+            </LinearLayout>
         </LinearLayout>
 
     </android.support.design.widget.AppBarLayout>

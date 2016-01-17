@@ -6,9 +6,11 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.common.base.Objects;
 
@@ -25,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> scoredPkgs = new ArrayList<>();
     long myScore = 0;
     TextView myScoreTextView;
+    View myScoreLayout;
 
     final AppListBaseAdapter appListViewBaseAdapter = new AppListBaseAdapter();
 
@@ -34,10 +37,24 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         myScoreTextView = (TextView) findViewById(R.id.myScoreText);
+        myScoreLayout = findViewById(R.id.myScoreLayout);
         updateMyScrollText();
+
+        findViewById(R.id.refresh).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getAppList();
+            }
+        });
 
         final ListView appListView = (ListView) findViewById(R.id.appsListView);
         appListView.setAdapter(appListViewBaseAdapter);
+        getAppList();
+
+        checkIntent(getIntent());
+    }
+
+    private void getAppList() {
         new AsyncTask<Void, Void, AppDataList>() {
             @Override
             protected AppDataList doInBackground(Void... params) {
@@ -47,13 +64,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             protected void onPostExecute(AppDataList aVoid) {
                 super.onPostExecute(aVoid);
+                if (null == aVoid || aVoid.getApps().isEmpty()) {
+                    Toast.makeText(getApplicationContext(),
+                            R.string.app_get_list_failed, Toast.LENGTH_SHORT).show();
+                }
                 appListViewBaseAdapter.setAppDataList(aVoid);
                 appListViewBaseAdapter.notifyDataSetChanged();
                 updateMyScrollText();
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-
-        checkIntent(getIntent());
     }
 
     private void updateMyScrollText() {
@@ -70,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
             scoredPkgs.clear();
         }
         myScoreTextView.setText(String.valueOf(myScore));
-        myScoreTextView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.grow_fade_in_from_bottom));
+        myScoreLayout.startAnimation(AnimationUtils.loadAnimation(this, R.anim.grow_fade_in_from_bottom_slow));
     }
 
     @Override

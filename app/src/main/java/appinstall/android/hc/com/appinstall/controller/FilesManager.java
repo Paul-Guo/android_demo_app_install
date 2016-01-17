@@ -29,7 +29,7 @@ public class FilesManager {
         } else if (sizekb > 0) {
             return String.format("%.2fKB", sizekb + kb / 1024f);
         } else {
-            return String.format("%.2fB", size);
+            return String.format("%.2fB", (float) size);
         }
     }
 }

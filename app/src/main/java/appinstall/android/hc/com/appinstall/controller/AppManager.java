@@ -63,14 +63,22 @@ public class AppManager {
     }
 
     public AppDataList getAppDataListFromNet(final String url) {
+        HttpHelper.OkHttpResponse response = null;
         try {
-            String string = Resources.toString(new URL(url), Charset.defaultCharset());
-            string = string.replace("mailesong.test.com", "cn.com.mcdonalds.m4d");
-            AppDataList appDataList = AppDataList.fromJsonStr(string);
-            Log.e("test_app_list", new Gson().toJson(appDataList).toString());
-            return appDataList;
+            response = httpHelper.getWizHttpCodeReturn(new URL(url));
+            if (null != response) {
+                String string = response.getResponseString();
+                string = string.replace("mailesong.test.com", "cn.com.mcdonalds.m4d");
+                AppDataList appDataList = AppDataList.fromJsonStr(string);
+                Log.e("test_app_list", new Gson().toJson(appDataList).toString());
+                return appDataList;
+            }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (null != response) {
+                response.close();
+            }
         }
         return null;
     }
@@ -131,12 +139,12 @@ public class AppManager {
     }
 
     public DownloadAppAsyncTask startDownload(final Context context, final AppData data,
-                                              final AppListBaseAdapter appListBaseAdapter) {
+                                              final AppListBaseAdapter.ViewHolder viewHolder) {
         synchronized (asyncTaskHashMap) {
             if (null != data && null != data.getPkg()) {
                 if (!isDownloading(data)) {
                     DownloadAppAsyncTask asyncTask = new DownloadAppAsyncTask(
-                            asyncTaskHashMap, context, data, appListBaseAdapter);
+                            asyncTaskHashMap, context, data, viewHolder, httpHelper);
                     asyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                     asyncTaskHashMap.put(data.getPkg(), asyncTask);
                     return asyncTask;
@@ -181,10 +189,6 @@ public class AppManager {
                 }
                 if (null != asyncTask && !asyncTask.isCancelled()) {
                     asyncTask.cancel(true);
-                    if (asyncTask instanceof DownloadAppAsyncTask) {
-                        ((DownloadAppAsyncTask) asyncTask).release();
-                    } else {
-                    }
                     asyncTaskHashMap.remove(data.getPkg());
                     return true;
                 }
@@ -214,11 +218,18 @@ public class AppManager {
                 HashMap<String, String> ps = new HashMap<String, String>();
                 ps.put("id", "13816872244");
                 ps.put("package", pkg);
+                HttpHelper.OkHttpResponse response = null;
                 try {
-                    HttpHelper.OkHttpResponse response = httpHelper.postWizHttpCodeReturn(new URL("http://182.254.150.12:8080/log"), ps);
-                    Log.e("test", response.getMsg() + response.getResponseString() + response.getHttpCode());
+                    response = httpHelper.postWizHttpCodeReturn(new URL("http://182.254.150.12:8080/log"), ps);
+                    if (null != response) {
+                        Log.e("test", response.getMsg() + response.getResponseString() + response.getHttpCode());
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
+                } finally {
+                    if (null != response) {
+                        response.close();
+                    }
                 }
                 return null;
             }
