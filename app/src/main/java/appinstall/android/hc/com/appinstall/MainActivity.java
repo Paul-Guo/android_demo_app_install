@@ -1,6 +1,7 @@
 package appinstall.android.hc.com.appinstall;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -76,12 +77,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateMyScrollText() {
+        SharedPreferences sharedPreferences = getSharedPreferences("data_score", MODE_PRIVATE);
+        myScore = sharedPreferences.getLong("my_score", 0);
         if (appListViewBaseAdapter.getCount() > 0) {
             for (String pkg : scoredPkgs) {
                 if (appManager.isInstalled(this, pkg)) {
                     for (AppData appData : appListViewBaseAdapter.getAppDataList().getApps()) {
                         if (Objects.equal(pkg, appData.getPkg())) {
                             myScore += appData.getScore();
+                            sharedPreferences.edit().putLong("my_score", myScore).commit();
                         }
                     }
                 }

@@ -22,8 +22,10 @@
 
             <Button
                 android:id="@+id/refresh"
+                style="@style/Base.Widget.AppCompat.Button.Small"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_margin="@dimen/app_list_margin"
                 android:text="@string/app_get_list_refresh"
                 android:textSize="@dimen/app_list_item_text_size" />
 

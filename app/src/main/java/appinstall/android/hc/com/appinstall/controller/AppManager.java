@@ -207,11 +207,11 @@ public class AppManager {
     }
 
     public void reportInstalledApk(final String pkg) {
-        try {
-            FileSystem.SYSTEM.delete(new File(FilesManager.getCachedFileFromPkg(pkg)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            FileSystem.SYSTEM.delete(new File(FilesManager.getCachedFileFromPkg(pkg)));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {

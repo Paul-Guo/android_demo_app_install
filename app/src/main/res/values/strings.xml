@@ -6,6 +6,7 @@
     <string name="app_install">安装</string>
     <string name="app_cancel_downloading">取消下载</string>
     <string name="app_uninstall">卸载</string>
+    <string name="app_install_get_score">已获得%d积分</string>
 
     <string name="app_get_list_failed">读取应用列表出错,请刷新重试！</string>
     <string name="app_get_list_refresh">刷新</string>

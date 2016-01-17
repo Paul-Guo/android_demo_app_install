@@ -8,9 +8,9 @@
     <integer name="config_activityLongDur">500</integer>
     <integer name="config_activityLongLargeDur">1000</integer>
 
-    <dimen name="app_list_margin">4dp</dimen>
+    <dimen name="app_list_margin">2dp</dimen>
     <dimen name="app_list_padding_text">12dp</dimen>
-    <dimen name="app_list_divider">2dp</dimen>
-    <dimen name="app_list_item_icon_size">64dp</dimen>
-    <dimen name="app_list_item_text_size">16dp</dimen>
+    <dimen name="app_list_divider">1dp</dimen>
+    <dimen name="app_list_item_icon_size">32dp</dimen>
+    <dimen name="app_list_item_text_size">12dp</dimen>
 </resources>

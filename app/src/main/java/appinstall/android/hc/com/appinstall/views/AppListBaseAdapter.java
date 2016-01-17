@@ -33,6 +33,7 @@ public class AppListBaseAdapter extends BaseAdapter {
         AppListBaseAdapter appListBaseAdapter;
         AppManager appManager;
         AppData data;
+        public TextView installGetScoreText;
         public TextView scoreText;
         public View scoreLayout;
         public View progressLayout;
@@ -90,6 +91,7 @@ public class AppListBaseAdapter extends BaseAdapter {
             viewHolder = new ViewHolder();
             viewHolder.appListBaseAdapter = this;
             viewHolder.appManager = appManager;
+            viewHolder.installGetScoreText = (TextView) convertView.findViewById(R.id.installGetScoreText);
             viewHolder.scoreText = (TextView) convertView.findViewById(R.id.scoreText);
             viewHolder.scoreLayout = convertView.findViewById(R.id.scoreLayout);
             viewHolder.icon = (ImageView) convertView.findViewById(R.id.icon);
@@ -126,6 +128,7 @@ public class AppListBaseAdapter extends BaseAdapter {
         });
         viewHolder.open.setVisibility(View.GONE);
         viewHolder.progressLayout.setVisibility(View.GONE);
+        viewHolder.installGetScoreText.setVisibility(View.GONE);
         if (appManager.isDownloading(data)) {
             viewHolder.button.setText(R.string.app_cancel_downloading);
             viewHolder.progressLayout.setVisibility(View.VISIBLE);
@@ -133,6 +136,9 @@ public class AppListBaseAdapter extends BaseAdapter {
         } else if (appManager.isInstalled(context, data)) {
             viewHolder.button.setText(R.string.app_uninstall);
             viewHolder.open.setVisibility(View.VISIBLE);
+            viewHolder.installGetScoreText.setVisibility(View.VISIBLE);
+            String text = context.getString(R.string.app_install_get_score, data.getScore());
+            viewHolder.installGetScoreText.setText(text);
         } else {
             viewHolder.button.setText(R.string.app_install);
         }
